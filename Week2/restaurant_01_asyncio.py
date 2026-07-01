@@ -1,58 +1,56 @@
-from time import ctime, time
+# Assignment Week2: Restaurant Asyncio Workflow
+# Concept: Sequential greeting followed by concurrent tasks for customer ordering/cooking/drinks.
 import asyncio
+from time import time, ctime
 
-# ========================================================
-# Restaurant Simulation — Version 4: Asyncio
-# Greeting ทีละคน (Sequential) แล้วสร้าง Async Task ต่อ 1 ลูกค้า
-# 3 Tasks รัน 3 ขั้นตอนที่เหลือพร้อมกันบน Single Thread
-# ========================================================
+# 1. ขั้นตอนต้อนรับหน้าร้าน ทำแบบ Synchronous เรียงทีละคน
+async def greet_diners(customer):
+    print(f"{ctime()} Greeting for Customer-{customer} ...")
+    await asyncio.sleep(1)
+    print(f"{ctime()} Greeting for Customer-{customer} ...Done!")
 
-STEP_DELAY = 1  # แต่ละขั้นตอนใช้เวลา 1 วินาที
+# 2. กระบวนการส่วนตัวของลูกค้าแต่ละคน ที่จะถูกนำไปรันแยกใน Task ของตัวเอง
+async def customer_private_workflow(customer):
+    # Take Order
+    print(f"{ctime()}  [Task-{customer}] Taking Order ...")
+    await asyncio.sleep(1)
+    print(f"{ctime()}  [Task-{customer}] Taking Order ...Done!")
 
-async def greet_customer(customer):
-    print(f"[{ctime()}] Greeting for {customer} ...")
-    await asyncio.sleep(STEP_DELAY)
-    print(f"[{ctime()}] Greeting for {customer} ...Done!")
+    # Do Cooking
+    print(f"{ctime()}  [Task-{customer}] Cooking Spaghetti ...")
+    await asyncio.sleep(1)
+    print(f"{ctime()}  [Task-{customer}] Cooking Spaghetti ...Done!")
 
-async def customer_workflow(task_name):
-    """ขั้นตอนที่เหลือหลัง Greeting: รันเป็น Async Task"""
-    print(f"[{ctime()}]    [{task_name}] Taking Order ...")
-    await asyncio.sleep(STEP_DELAY)
-    print(f"[{ctime()}]    [{task_name}] Taking Order ...Done!")
-
-    print(f"[{ctime()}]    [{task_name}] Cooking Spaghetti ...")
-    await asyncio.sleep(STEP_DELAY)
-    print(f"[{ctime()}]    [{task_name}] Cooking Spaghetti ...Done!")
-
-    print(f"[{ctime()}]    [{task_name}] Manage Bar for Drink ...")
-    await asyncio.sleep(STEP_DELAY)
-    print(f"[{ctime()}]    [{task_name}] Manage Bar for Drink ...Done!")
-    print(f"[{ctime()}]    [{task_name}] All served!\n")
+    # Manage Bar
+    print(f"{ctime()}  [Task-{customer}] Manage Bar for Drink ...")
+    await asyncio.sleep(1)
+    print(f"{ctime()}  [Task-{customer}] Manage Bar for Drink ...Done!")
+    print(f"{ctime()}  [Task-{customer}] All served!\n")
 
 async def main():
-    customers = ["Customer-A", "Customer-B", "Customer-C"]
-    start = time()
+    start_time = time()
+    customers = ['A', 'B', 'C']
 
-    # ขั้นที่ 1: Greeting ทีละคน (Sequential await)
+    # ----------------------------------------------------
+    # PHASE 1: Greet diners sequentially
+    # ----------------------------------------------------
     for customer in customers:
-        await greet_customer(customer)
+        await greet_diners(customer)
 
-    print(f"\n[{ctime()}] --- All customers greeted. Scheduling independent Async Tasks! ---\n")
+    print(f"\n{ctime()} --- All customers greeted. Scheduling independent Async Tasks! ---\n")
 
-    # ขั้นที่ 2: สร้าง Task ต่อ 1 ลูกค้า แล้วรันพร้อมกัน (Concurrent)
+    # ----------------------------------------------------
+    # PHASE 2: Spawn tasks for concurrent phases
+    # ----------------------------------------------------
     tasks = []
     for customer in customers:
-        task_name = f"Task-{customer.split('-')[-1]}"
-        task = asyncio.create_task(customer_workflow(task_name))
+        task = asyncio.create_task(customer_private_workflow(customer))
         tasks.append(task)
 
-    # รอทุก Task เสร็จ
-    for task in tasks:
-        await task
+    await asyncio.gather(*tasks)
 
-    elapsed = time() - start
-    print(f"[{ctime()}] Finished Entire Restaurant Operation in {elapsed:.2f} seconds.")
-    print(f"\n[หมายเหตุ] Asyncio: 3s (greeting) + 3s (concurrent tasks) ≈ 6s | Single Thread!")
+    duration = time() - start_time
+    print(f"{ctime()} Finished Cooking in {duration:0.2f} seconds.")
 
 if __name__ == "__main__":
     asyncio.run(main())
