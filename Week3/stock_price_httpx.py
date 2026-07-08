@@ -47,7 +47,7 @@ async def main():
         print(f"{ctime()} WINNER -> {winner.result()}")
 
     # [Anti-Memory Leak] ยกเลิกงานที่ยังค้างอยู่ใน pending ทั้งหมด เพื่อตัด Network Request ที่ยังวิ่งค้าง
-    print(f"{ctime()} Cancelling {len(pending)} pending network request(s)...")
+    print(f"{ctime()} Cleaning up {len(pending)} pending task...")
     for ongoing_task in pending:
         ongoing_task.cancel()
 
